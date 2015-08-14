@@ -74,6 +74,7 @@ public class FragmentAnimation extends Fragment {
     }
 
     private void setUpAnimation() {
+        // Setup start state of the views
         cameraBtn.setScaleX(minScale);
         cameraBtn.setScaleY(minScale);
         originX = cameraBtn.getX();
@@ -90,6 +91,7 @@ public class FragmentAnimation extends Fragment {
         settingBtn.setScaleX(minScale);
         settingBtn.setScaleY(minScale);
 
+        // Store all views in the list
         animateViews.add(mapBtn);
         animateViews.add(favoriteBtn);
         animateViews.add(homeBtn);
@@ -97,6 +99,7 @@ public class FragmentAnimation extends Fragment {
         animateViews.add(settingBtn);
     }
 
+    // Start the animation
     private void startIcAnimation() {
         cameraBtn.animate().setInterpolator(new AccelerateInterpolator())
                 .setDuration(ANIM_DURATION)
@@ -127,6 +130,7 @@ public class FragmentAnimation extends Fragment {
         }
     }
 
+    // Reverse the animation
     private void reverseIcAnimation() {
         for (int i = COUNT - 1; i >= 0; i--) {
             animateViews.get(i).animate()
@@ -149,7 +153,7 @@ public class FragmentAnimation extends Fragment {
                     public void onAnimationEnd(Animator animation) {
                         super.onAnimationEnd(animation);
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            animateRevealHide(button);
+                            animateCircularHide(button);
                         } else {
                             EventBus.getDefault().post(new ActivityAnimation.BackEvent());
                         }
@@ -160,13 +164,20 @@ public class FragmentAnimation extends Fragment {
                 .start();
     }
 
+    /**
+     * Start the circular animation
+     * This method will create a circular animation with the init radius base on the viewroot
+     * And the final radius will cover all the screen of the device
+     * In this case the final radius base on the "container"
+     * @param viewRoot View : the view from which the animation will start
+     */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private void animateRevealShow(View viewRoot) {
-        int cx = (viewRoot.getLeft() + viewRoot.getRight()) / 2;
-        int cy = (viewRoot.getTop() + viewRoot.getBottom()) / 2;
+    private void animateCircularShow(View viewRoot) {
+        int x = (viewRoot.getLeft() + viewRoot.getRight()) / 2;
+        int y = (viewRoot.getTop() + viewRoot.getBottom()) / 2;
         int finalRadius = Math.max(container.getWidth(), container.getHeight());
 
-        Animator anim = ViewAnimationUtils.createCircularReveal(container, cx, cy, 0, finalRadius);
+        Animator anim = ViewAnimationUtils.createCircularReveal(container, x, y, 0, finalRadius);
         container.setVisibility(View.VISIBLE);
         anim.setDuration(TRANSITION_DURATION);
         anim.addListener(new AnimatorListenerAdapter() {
@@ -179,13 +190,19 @@ public class FragmentAnimation extends Fragment {
         anim.start();
     }
 
+    /**
+     * Start the circular animation
+     * This method will create a circular animation with the init radius base on the container that will cover the device
+     * And the final radius base on the viewroot
+     * @param viewRoot View : the view from which the animation will end
+     */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private void animateRevealHide(final View viewRoot) {
-        int cx = (viewRoot.getLeft() + viewRoot.getRight()) / 2;
-        int cy = (viewRoot.getTop() + viewRoot.getBottom()) / 2;
+    private void animateCircularHide(final View viewRoot) {
+        int x = (viewRoot.getLeft() + viewRoot.getRight()) / 2;
+        int y = (viewRoot.getTop() + viewRoot.getBottom()) / 2;
         int initialRadius = Math.max(container.getWidth(), container.getHeight());
 
-        Animator anim = ViewAnimationUtils.createCircularReveal(container, cx, cy, initialRadius, 0);
+        Animator anim = ViewAnimationUtils.createCircularReveal(container, x, y, initialRadius, 0);
         anim.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -223,7 +240,7 @@ public class FragmentAnimation extends Fragment {
             public void onLayoutChange(View v, int left, int top, int right, int bottom,
                                        int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    animateRevealShow(button);
+                    animateCircularShow(button);
                 } else {
                     container.setVisibility(View.VISIBLE);
                     container.removeOnLayoutChangeListener(this);
@@ -266,16 +283,40 @@ public class FragmentAnimation extends Fragment {
         reverseIcAnimation();
     }
 
+    /* Utilities */
 
-    // Utilities
+    /**
+     * This will return the x-coordinate of the point in the regular polygon
+     * @param centerX float : the x-center-coordinate of the regular polygon
+     * @param radius float : the distance from center to one point of the regular polygon
+     * @param count float : the number of point on the regular polygon
+     * @param step int : the number label to the points of the regular polygon (For example with count = 5, step is 0, 1, 2, 3 or 4
+     * @param angle double : the delta angle, change it if you want to rotate the polygon
+     * @return float : the x-coordinate of th-step
+     */
     private float getXAnim(float centerX, float radius, int count, int step, double angle) {
         return (float) (centerX + radius * Math.cos(((2 * Math.PI) / count) * step + angle));
     }
 
+    /**
+     * This will return the y-coordinate of the point in the regular polygon
+     * @param centerY float : the y-center-coordinate of the regular polygon
+     * @param radius float : the distance from center to one point of the regular polygon
+     * @param count float : the number of point on the regular polygon
+     * @param step int : the number label to the points of the regular polygon (For example with count = 5, step is 0, 1, 2, 3 or 4
+     * @param angle double : the delta angle, change it if you want to rotate the polygon
+     * @return float : the y-coordinate of th-step
+     */
     private float getYAnim(float centerY, float radius, int count, int step, double angle) {
         return (float) (centerY + radius * Math.sin(((2 * Math.PI) / count) * step + angle));
     }
 
+    /**
+     * Convert dp to px
+     * @param context Context : the context
+     * @param dp float : the input dp
+     * @return float : the pixel convert from dp
+     */
     public float pxFromDp(final Context context, final float dp) {
         return dp * context.getResources().getDisplayMetrics().density;
     }
